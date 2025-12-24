@@ -12,11 +12,19 @@ class Statistics {
   });
 
   factory Statistics.fromJson(Map<String, dynamic> json) {
+    // Функция-помощник для парсинга, так как бэкенд шлет строки
+    double parseDouble(dynamic value) {
+      if (value is String) {
+        return double.tryParse(value) ?? 0.0;
+      }
+      return (value as num?)?.toDouble() ?? 0.0;
+    }
+
     return Statistics(
-      totalIncome: (json['total_income'] as num).toDouble(),
-      totalExpense: (json['total_expense'] as num).toDouble(),
-      balance: (json['balance'] as num).toDouble(),
-      transactionsCount: json['transactions_count'] as int,
+      totalIncome: parseDouble(json['total_income']),
+      totalExpense: parseDouble(json['total_expense']),
+      balance: parseDouble(json['balance']),
+      transactionsCount: json['transactions_count'] as int? ?? 0,
     );
   }
 }

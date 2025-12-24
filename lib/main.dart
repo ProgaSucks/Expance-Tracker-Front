@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../forms/login.dart';
 import '../forms/register.dart';
+import '../forms/home.dart';
 
 void main() {
   runApp(const MyApp());
@@ -70,6 +71,7 @@ class _AuthCheckState extends State<AuthCheck> {
   }
 }
 
+/*
 // Временная заглушка для главного экрана
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -93,4 +95,4 @@ class HomeScreen extends StatelessWidget {
       body: const Center(child: Text('Добро пожаловать!')),
     );
   }
-}
+}*/
