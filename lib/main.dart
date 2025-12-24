@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../forms/login.dart'; // Путь к вашему файлу с формой логина
+import '../forms/login.dart';
+import '../forms/register.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,7 +22,8 @@ class MyApp extends StatelessWidget {
       home: const AuthCheck(),
       routes: {
         '/login': (context) => LoginScreen(),
-        '/home': (context) => const HomeScreen(), // Создадим его позже
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
       },
     );
   }

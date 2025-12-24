@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../app/services.dart';
+import '../services/auth.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -57,6 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(labelText: 'Пароль'),
                 obscureText: true,
                 validator: (value) => value!.isEmpty ? 'Введите пароль' : null,
+              ),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/register'),
+                child: const Text('Нет аккаунта? Зарегистрироваться'),
               ),
               SizedBox(height: 20),
               _isLoading 
