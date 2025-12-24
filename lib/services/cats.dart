@@ -25,4 +25,26 @@ class CategoryService {
       throw Exception('Не удалось загрузить категории');
     }
   }
+
+  Future<bool> updateCategory(int id, String name, String type) async {
+    String? token = await storage.read(key: 'jwt');
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'name': name, 'type': type}),
+    );
+    return response.statusCode == 200;
+  }
+
+  Future<bool> deleteCategory(int id) async {
+    String? token = await storage.read(key: 'jwt');
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    return response.statusCode == 204;
+  }
 }

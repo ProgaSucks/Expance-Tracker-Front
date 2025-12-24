@@ -74,7 +74,6 @@ Future<bool> _showDeleteDialog() async {
         description: _descController.text,
         type: _type,
         categoryId: _selectedCategory!.id,
-        date: widget.transaction.date.split('T')[0],
       );
 
       if (success) {

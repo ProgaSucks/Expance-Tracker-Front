@@ -58,7 +58,6 @@ Future<bool> updateTransaction({
   required String description,
   required String type,
   required int categoryId,
-  required String date,
 }) async {
   String? token = await storage.read(key: 'jwt');
   
@@ -73,7 +72,6 @@ Future<bool> updateTransaction({
       'description': description,
       'type': type,
       'category_id': categoryId,
-      'date': date, // Передаем дату, которая уже была (или измененную)
     }),
   );
   return response.statusCode == 200;
