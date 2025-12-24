@@ -1,0 +1,14 @@
+name: expence_tracker_front
+description: "my leg is floating in pond"
+version: "0.0.1"
+publish_to: "none"
+
+environment:
+  sdk: '^3.10.0'
+
+dependencies:
+  http: ^1.1.0
+  flutter_secure_storage: ^9.0.0
+
+flutter:
+  uses-material-design: true
