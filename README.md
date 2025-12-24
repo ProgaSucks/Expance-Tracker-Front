@@ -1,2 +1,2 @@
 # Expance-Tracker-Front
-Fuck programming
+I love my friends
