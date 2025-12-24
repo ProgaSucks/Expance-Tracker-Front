@@ -192,7 +192,21 @@ class HistoryTab extends StatelessWidget {
           );
         },
       ),
-      // ... ваш FloatingActionButton ...
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // Переходим на экран формы и ждем результат
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+          );
+          
+          // Если транзакция добавлена, обновляем экран
+          if (result == true) {
+            (context as Element).markNeedsBuild(); // Простейший способ обновить FutureBuilder
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
