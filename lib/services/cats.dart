@@ -26,6 +26,19 @@ class CategoryService {
     }
   }
 
+  Future<bool> createCategory(String name, String type) async {
+    String? token = await storage.read(key: 'jwt');
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/categories'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'name': name, 'type': type}),
+    );
+    return response.statusCode == 201;
+  }
+
   Future<bool> updateCategory(int id, String name, String type) async {
     String? token = await storage.read(key: 'jwt');
     final response = await http.put(
