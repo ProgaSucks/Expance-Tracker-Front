@@ -64,7 +64,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 20),
               _isLoading 
-                ? CircularProgressIndicator() 
+                ? const SizedBox(
+                    height: 20, // Фиксированная высота
+                    width: 20,  // Фиксированная ширина
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2, // Тонкая линия выглядит аккуратнее
+                      color: Colors.blue,
+                    ),
+                  )
                 : ElevatedButton(onPressed: _login, child: Text('Войти')),
             ],
           ),

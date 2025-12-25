@@ -19,17 +19,26 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<SummaryTabState> _summaryKey = GlobalKey();
   final GlobalKey<HistoryTabState> _historyKey = GlobalKey();
   final GlobalKey<CategoriesTabState> _categoriesKey = GlobalKey();
+
   // Список виджетов для вкладок
   late List<Widget> _pages;
+  late DateTimeRange _selectedDateRange;
 
   @override
   void initState() {
     super.initState();
-    _pages = [
-      SummaryTab(key: _summaryKey),
-      HistoryTab(key: _historyKey),
-      CategoriesTab(key: _categoriesKey),
-    ];
+    final now = DateTime.now();
+      _selectedDateRange = DateTimeRange(
+      start: DateTime(now.year, now.month, 1),
+      end: now,
+    );
+  }
+
+  // 2. Метод для обновления периода
+  void _updateDateRange(DateTimeRange newRange) {
+    setState(() {
+      _selectedDateRange = newRange;
+    });
   }
 
   Future<void> _logout() async {
@@ -71,6 +80,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _pages = [
+      SummaryTab(key: _summaryKey,
+        dateRange: _selectedDateRange,
+        onDateRangeChanged: _updateDateRange),
+      HistoryTab(key: _historyKey,
+        dateRange: _selectedDateRange,
+        onDateRangeChanged: _updateDateRange),
+      CategoriesTab(key: _categoriesKey),
+    ];
+    
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
       resizeToAvoidBottomInset: false,

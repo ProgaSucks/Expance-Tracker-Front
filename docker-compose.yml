@@ -1,7 +1,7 @@
 services:
   frontend:
     build: .
-    container_name: expense_tracker_front
+    container_name: Gelder Tracker
     restart: always
     ports:
       # Слушаем на 8002, но ТОЛЬКО локально (закрыто из интернета)

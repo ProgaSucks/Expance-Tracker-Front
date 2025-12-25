@@ -5,7 +5,14 @@ import '../../models/statistics.dart';
 
 // Виджет вкладки общей статистики
 class SummaryTab extends StatefulWidget {
-  const SummaryTab({super.key});
+  final DateTimeRange dateRange;
+  final Function(DateTimeRange) onDateRangeChanged;
+
+  const SummaryTab({
+    super.key,
+    required this.dateRange,
+    required this.onDateRangeChanged,
+  });
 
   @override
   State<SummaryTab> createState() => SummaryTabState();
@@ -20,6 +27,26 @@ class SummaryTabState extends State<SummaryTab> {
   void initState() {
     super.initState();
     _initiateDataFetch();
+  }
+
+  Future<void> _selectDateRange() async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: widget.dateRange,
+      helpText: 'Выберите период',
+    );
+
+    if (picked != null && picked != widget.dateRange) {
+      widget.onDateRangeChanged(picked);
+    }
+  }
+
+  String _formatDateRange(DateTimeRange range) {
+    final start = range.start.toString().split(' ')[0];
+    final end = range.end.toString().split(' ')[0];
+    return '$start — $end';
   }
 
   // Метод для инициализации загрузки
@@ -44,24 +71,56 @@ Widget build(BuildContext context) {
       title: const Text('Обзор'),
       actions: [
         IconButton(
+          icon: const Icon(Icons.date_range),
+          tooltip: 'Выбрать период',
+          onPressed: _selectDateRange,
+        ),
+        IconButton(
           icon: const Icon(Icons.refresh),
           tooltip: 'Обновить данные',
           onPressed: refreshData, // Тот же метод, что и для Pull-to-Refresh
         ),
       ],
     ),
-    body: RefreshIndicator(
-      onRefresh: refreshData,
-      child: FutureBuilder<Statistics?>(
-        future: _activeStatsRequest,
-        builder: (context, snapshot) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            child: _buildContent(snapshot),
-          );
-        },
-      ),
+    body: Column(
+      children: [
+        RefreshIndicator(
+          onRefresh: refreshData,
+          child: FutureBuilder<Statistics?>(
+            future: _activeStatsRequest,
+            builder: (context, snapshot) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: _buildContent(snapshot),
+              );
+            },
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          color: Colors.grey[200],
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                'Период: ${_formatDateRange(widget.dateRange)}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+        // Основной контент статистики
+        Expanded(
+          child: Center(
+            child: Text('Здесь будут диаграммы за период\n${_formatDateRange(widget.dateRange)}'),
+            // Замените этот Text на ваш реальный виджет статистики, 
+            // предварительно отфильтровав данные по датам.
+          ),
+        ),
+      ],
     ),
   );
 }
