@@ -39,6 +39,22 @@ class HistoryTabState extends State<HistoryTab> {
     await _historyData; // Ждем завершения загрузки, чтобы индикатор исчез
   }
 
+  Map<String, List<Transaction>> _groupTransactions(List<Transaction> transactions) {
+    // Сортируем транзакции по дате (от новых к старым)
+    transactions.sort((a, b) => b.date.compareTo(a.date));
+
+    final groups = <String, List<Transaction>>{};
+    for (var tx in transactions) {
+      // Берем только часть даты YYYY-MM-DD
+      final date = tx.date.split('T')[0];
+      if (groups[date] == null) {
+        groups[date] = [];
+      }
+      groups[date]!.add(tx);
+    }
+    return groups;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,7 +92,6 @@ class HistoryTabState extends State<HistoryTab> {
             final List<Category> categories = snapshot.data![1];
 
             return ListView.builder(
-              // КРИТИЧНО для RefreshIndicator на маленьких списках:
               physics: const AlwaysScrollableScrollPhysics(), 
               itemCount: transactions.length,
               itemBuilder: (context, index) {
