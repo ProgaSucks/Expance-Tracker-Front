@@ -46,6 +46,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
+    if (index == 3) {
+      _logout();
+      return;
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -61,9 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         _categoriesKey.currentState?.refreshData();
         break;
-      case 3:
-        _logout();
-        return;
     }
   }
 
@@ -71,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
+      resizeToAvoidBottomInset: false,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -80,6 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Категории'),
           BottomNavigationBarItem(icon: Icon(Icons.logout), label: 'Выход'),
         ],
+        selectedItemColor: Colors.blue,   // Цвет выбранной иконки
+        unselectedItemColor: Colors.grey, // Цвет неактивных иконок
       ),
     );
   }

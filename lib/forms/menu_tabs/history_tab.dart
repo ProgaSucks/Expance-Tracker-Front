@@ -119,6 +119,7 @@ class HistoryTabState extends State<HistoryTab> {
       ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'history_add_button',
         onPressed: () async {
           // Переходим на экран формы и ждем результат
           final result = await Navigator.push(

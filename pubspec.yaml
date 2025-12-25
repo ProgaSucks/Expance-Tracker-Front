@@ -10,5 +10,20 @@ dependencies:
   http: ^1.1.0
   flutter_secure_storage: ^9.0.0
 
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/expence_icon.png"
+  web:
+    generate: true
+    image_path: "assets/expence_icon.png"
+    background_color: "#ffffff"
+    theme_color: "#ffffff"

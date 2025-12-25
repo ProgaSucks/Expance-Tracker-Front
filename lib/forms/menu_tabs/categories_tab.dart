@@ -60,6 +60,7 @@ class CategoriesTabState extends State<CategoriesTab> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'category_add_button',
         onPressed: () => _showCategoryDialog(null),
         child: const Icon(Icons.add),
       ),
