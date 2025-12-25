@@ -6,7 +6,6 @@ macos/
 windows/
 
 # Игнорируем папку сборки и git
-build/
 .git/
 .github/
 .idea/
