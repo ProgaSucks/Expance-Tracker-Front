@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'menu_tabs/summary_tab.dart';
 import 'menu_tabs/history_tab.dart';
 import 'menu_tabs/categories_tab.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'login.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +32,19 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  Future<void> _logout() async {
+    const storage = FlutterSecureStorage();
+    await storage.delete(key: 'jwt'); // Удаляем токен
+    
+    if (mounted) {
+      // Возвращаемся на экран входа и очищаем стек навигации
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -46,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         _categoriesKey.currentState?.refreshData();
         break;
+      case 3:
+        _logout();
+        return;
     }
   }
 
@@ -60,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Обзор'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'История'),
           BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Категории'),
+          BottomNavigationBarItem(icon: Icon(Icons.logout), label: 'Выход'),
         ],
       ),
     );

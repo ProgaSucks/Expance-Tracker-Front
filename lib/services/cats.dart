@@ -1,22 +1,12 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/category.dart';
-import '../core.dart';
+import '../api_client.dart';
 
 class CategoryService {
-  final storage = const FlutterSecureStorage();
+  final ApiClient _apiClient = ApiClient();
 
   Future<List<Category>> getCategories() async {
-    String? token = await storage.read(key: 'jwt');
-    
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/categories'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
+    final response = await _apiClient.get('/categories');
 
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);
@@ -27,36 +17,22 @@ class CategoryService {
   }
 
   Future<bool> createCategory(String name, String type) async {
-    String? token = await storage.read(key: 'jwt');
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/categories'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'name': name, 'type': type}),
+    final response = await _apiClient.post(
+      '/categories', {'name': name, 'type': type},
     );
     return response.statusCode == 201;
   }
 
   Future<bool> updateCategory(int id, String name, String type) async {
-    String? token = await storage.read(key: 'jwt');
-    final response = await http.put(
-      Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'name': name, 'type': type}),
+    final response = await _apiClient.put(
+      '/categories/$id', {'name': name, 'type': type},
     );
     return response.statusCode == 200;
   }
 
   Future<bool> deleteCategory(int id) async {
-    String? token = await storage.read(key: 'jwt');
-    final response = await http.delete(
-      Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
-      headers: {'Authorization': 'Bearer $token'},
+    final response = await _apiClient.delete(
+      '/categories/$id',
     );
     return response.statusCode == 204;
   }

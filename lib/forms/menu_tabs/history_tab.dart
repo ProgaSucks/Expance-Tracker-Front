@@ -127,9 +127,7 @@ class HistoryTabState extends State<HistoryTab> {
           );
           
           // Если транзакция добавлена, обновляем экран
-          if (result == true) {
-            refreshData();
-          }
+          if (result == true) refreshData();
         },
         child: const Icon(Icons.add),
       ),

@@ -8,12 +8,15 @@ void main() {
   runApp(const MyApp());
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Finance Tracker',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -70,29 +73,3 @@ class _AuthCheckState extends State<AuthCheck> {
     return _isLoggedIn ? const HomeScreen() : LoginScreen();
   }
 }
-
-/*
-// Временная заглушка для главного экрана
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Мои финансы'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              const storage = FlutterSecureStorage();
-              await storage.delete(key: 'jwt');
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          )
-        ],
-      ),
-      body: const Center(child: Text('Добро пожаловать!')),
-    );
-  }
-}*/

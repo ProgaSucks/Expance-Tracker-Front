@@ -1,26 +1,22 @@
 import 'dart:convert';
 import '../models/token.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../core.dart';
+import '../api_client.dart';
 
 class AuthService {
-  final storage = const FlutterSecureStorage();
+  final ApiClient _apiClient = ApiClient();
 
   Future<bool> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse(ApiConfig.baseUrl + '/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
+    final response = await _apiClient.post(
+        '/auth/login', {
+          'email': email,
+          'password': password,
+        },
     );
 
     if (response.statusCode == 200) {
       final token = Token.fromJson(jsonDecode(response.body));
       // Сохраняем токен для будущих запросов [cite: 8]
-      await storage.write(key: 'jwt', value: token.accessToken);
+      await _apiClient.storage.write(key: 'jwt', value: token.accessToken);
       return true;
     } else {
       // Бэкенд вернет 401 при ошибке [cite: 29]
@@ -30,13 +26,11 @@ class AuthService {
 
   Future<bool> register(String email, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse(ApiConfig.baseUrl + '/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final response = await _apiClient.post(
+        '/auth/register', {
           'email': email,
           'password': password,
-        }),
+        },
       );
 
       // Бэкенд возвращает 201 Created при успешной регистрации
