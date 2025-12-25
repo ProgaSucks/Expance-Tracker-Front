@@ -11,10 +11,10 @@ class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
 
   @override
-  State<HistoryTab> createState() => _HistoryTabState();
+  State<HistoryTab> createState() => HistoryTabState();
 }
 
-class _HistoryTabState extends State<HistoryTab> {
+class HistoryTabState extends State<HistoryTab> {
   late Future<List<dynamic>> _historyData;
 
   @override
@@ -32,7 +32,7 @@ class _HistoryTabState extends State<HistoryTab> {
   }
 
   // Функция, которую вызовет RefreshIndicator
-  Future<void> _handleRefresh() async {
+  Future<void> refreshData() async {
     setState(() {
       _loadData(); // Пересоздаем Future, что инициирует новый запрос
     });
@@ -48,12 +48,12 @@ class _HistoryTabState extends State<HistoryTab> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Обновить список',
-            onPressed: _handleRefresh, // Вызывает загрузку транзакций и категорий
+            onPressed: refreshData, // Вызывает загрузку транзакций и категорий
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _handleRefresh,
+        onRefresh: refreshData,
         child: FutureBuilder(
           future: _historyData,
           builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
@@ -93,7 +93,7 @@ class _HistoryTabState extends State<HistoryTab> {
                       context,
                       MaterialPageRoute(builder: (context) => EditTransactionScreen(transaction: tx)),
                     );
-                    if (result == true) _handleRefresh(); // Обновляем при возврате
+                    if (result == true) refreshData(); // Обновляем при возврате
                   },
                 leading: CircleAvatar(
                   backgroundColor: isIncome ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
@@ -128,7 +128,7 @@ class _HistoryTabState extends State<HistoryTab> {
           
           // Если транзакция добавлена, обновляем экран
           if (result == true) {
-            (context as Element).markNeedsBuild(); // Простейший способ обновить FutureBuilder
+            refreshData();
           }
         },
         child: const Icon(Icons.add),

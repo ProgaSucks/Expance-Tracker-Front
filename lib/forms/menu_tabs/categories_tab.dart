@@ -7,20 +7,20 @@ class CategoriesTab extends StatefulWidget {
   const CategoriesTab({super.key});
 
   @override
-  State<CategoriesTab> createState() => _CategoriesTabState();
+  State<CategoriesTab> createState() => CategoriesTabState();
 }
 
-class _CategoriesTabState extends State<CategoriesTab> {
+class CategoriesTabState extends State<CategoriesTab> {
   final CategoryService _service = CategoryService();
   late Future<List<Category>> _categoriesFuture;
 
   @override
   void initState() {
     super.initState();
-    _refresh();
+    refreshData();
   }
 
-  void _refresh() {
+  void refreshData() {
     setState(() {
       _categoriesFuture = _service.getCategories();
     });
@@ -32,7 +32,7 @@ class _CategoriesTabState extends State<CategoriesTab> {
       appBar: AppBar(
         title: const Text('Мои категории'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _refresh),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: refreshData),
         ],
       ),
       body: FutureBuilder<List<Category>>(
@@ -101,7 +101,7 @@ class _CategoriesTabState extends State<CategoriesTab> {
                 onPressed: () async {
                   await _service.deleteCategory(category.id);
                   Navigator.pop(context);
-                  _refresh();
+                  refreshData();
                 },
                 child: const Text('Удалить', style: TextStyle(color: Colors.red)),
               ),
@@ -116,7 +116,7 @@ class _CategoriesTabState extends State<CategoriesTab> {
                 }
                 if (success) {
                   Navigator.pop(context);
-                  _refresh();
+                  refreshData();
                 }
               },
               child: const Text('Сохранить'),

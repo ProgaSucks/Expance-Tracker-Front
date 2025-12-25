@@ -8,10 +8,10 @@ class SummaryTab extends StatefulWidget {
   const SummaryTab({super.key});
 
   @override
-  State<SummaryTab> createState() => _SummaryTabState();
+  State<SummaryTab> createState() => SummaryTabState();
 }
 
-class _SummaryTabState extends State<SummaryTab> {
+class SummaryTabState extends State<SummaryTab> {
   // Переменная для хранения текущего запроса к API
   late Future<Statistics?> _activeStatsRequest;
   final StatsService _apiService = StatsService();
@@ -28,7 +28,7 @@ class _SummaryTabState extends State<SummaryTab> {
   }
 
   // Обработчик Pull-to-Refresh
-  Future<void> _onRefreshTriggered() async {
+  Future<void> refreshData() async {
     setState(() {
       _initiateDataFetch();
     });
@@ -46,12 +46,12 @@ Widget build(BuildContext context) {
         IconButton(
           icon: const Icon(Icons.refresh),
           tooltip: 'Обновить данные',
-          onPressed: _onRefreshTriggered, // Тот же метод, что и для Pull-to-Refresh
+          onPressed: refreshData, // Тот же метод, что и для Pull-to-Refresh
         ),
       ],
     ),
     body: RefreshIndicator(
-      onRefresh: _onRefreshTriggered,
+      onRefresh: refreshData,
       child: FutureBuilder<Statistics?>(
         future: _activeStatsRequest,
         builder: (context, snapshot) {
