@@ -61,4 +61,13 @@ class ApiClient {
     );
     return _handleResponse(response);
   }
+
+  Future<http.Response> patch(String path, dynamic body) async {
+    final response = await _client.put(
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+      headers: await _getHeaders(),
+      body: jsonEncode(body),
+    );
+    return _handleResponse(response);
+  }
 }

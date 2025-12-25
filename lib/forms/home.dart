@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'menu_tabs/summary_tab.dart';
 import 'menu_tabs/history_tab.dart';
 import 'menu_tabs/categories_tab.dart';
+import 'menu_tabs/recommendation_tab.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'login.dart';
 
@@ -55,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == 3) {
+    if (index == 4) {
       _logout();
       return;
     }
@@ -88,18 +89,21 @@ class _HomeScreenState extends State<HomeScreen> {
         dateRange: _selectedDateRange,
         onDateRangeChanged: _updateDateRange),
       CategoriesTab(key: _categoriesKey),
+      const RecommendationsTab(), // <--- Новый таб (индекс 3)
     ];
-    
+
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
       resizeToAvoidBottomInset: false,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Обзор'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'История'),
           BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Категории'),
+          BottomNavigationBarItem(icon: Icon(Icons.lightbulb), label: 'Советы'),
           BottomNavigationBarItem(icon: Icon(Icons.logout), label: 'Выход'),
         ],
         selectedItemColor: Colors.blue,   // Цвет выбранной иконки
