@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../services/stats.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../services/cats.dart';
 import '../../services/trans.dart';
-import '../../models/statistics.dart';
 import '../../models/category.dart';
 import '../../models/transaction.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 // Виджет вкладки общей статистики
 class SummaryTab extends StatefulWidget {
@@ -23,17 +21,29 @@ class SummaryTab extends StatefulWidget {
 }
 
 class SummaryTabState extends State<SummaryTab> {
-  // Переменная для хранения текущего запроса к API
-  
+  // Теперь храним список из [List<Transaction>, List<Category>]
   late Future<List<dynamic>> _dataFuture;
-  final StatsService _statsService = StatsService();
+  
   final TransactionService _transService = TransactionService();
   final CategoryService _catService = CategoryService();
+  // StatsService больше не нужен для загрузки summary
 
   @override
   void initState() {
     super.initState();
     _initiateDataFetch();
+  }
+
+  @override
+  void didUpdateWidget(covariant SummaryTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dateRange != widget.dateRange) {
+      // Если дата изменилась, нам достаточно перестроить UI (setState), 
+      // так как транзакции у нас уже загружены все. 
+      // Но если вы хотите обновлять данные с сервера при смене даты, оставьте refreshData().
+      // Для простоты оставим обновление:
+      refreshData();
+    }
   }
 
   Future<void> _selectDateRange() async {
@@ -56,122 +66,100 @@ class SummaryTabState extends State<SummaryTab> {
     return '$start — $end';
   }
 
-  // Метод для инициализации загрузки
   void _initiateDataFetch() {
+    // Загружаем только транзакции и категории
     _dataFuture = Future.wait([
-      _statsService.getSummary(),           // индекс 0
-      _transService.getTransactions(),      // индекс 1
-      _catService.getCategories(),          // индекс 2
+      _transService.getTransactions(),      // индекс 0
+      _catService.getCategories(),          // индекс 1
     ]);
   }
 
-  // Обработчик Pull-to-Refresh
   Future<void> refreshData() async {
     setState(() {
       _initiateDataFetch();
     });
-    // Ждем завершения, чтобы скрыть индикатор загрузки
     await _dataFuture;
   }
 
-  // --- ЛОГИКА ПОДГОТОВКИ ДАННЫХ ДЛЯ ГРАФИКА ---
+  // --- МЕТОДЫ ПОСТРОЕНИЯ ГРАФИКОВ ---
+  // Теперь принимают уже отфильтрованный список и Map категорий для скорости
   List<PieChartSectionData> _generateChartSections(
-    List<Transaction> transactions, 
-    List<Category> categories
+    List<Transaction> transactions,
+    Map<int, Category> categoryMap,
+    CategoryType type, 
   ) {
-    // 1. Фильтруем по дате (как в Истории)
-    final filtered = transactions.where((tx) {
-      final txDate = DateTime.parse(tx.date);
-      return txDate.isAfter(widget.dateRange.start.subtract(const Duration(seconds: 1))) &&
-             txDate.isBefore(widget.dateRange.end.add(const Duration(days: 1)));
+    // 1. Оставляем только нужный тип (Доход/Расход)
+    final targetTransactions = transactions.where((tx) {
+      final cat = categoryMap[tx.categoryId];
+      return cat != null && cat.type == type;
     }).toList();
 
-    // 2. Оставляем только РАСХОДЫ
-    // Сначала найдем ID категорий расходов
-    final expenseCatIds = categories
-        .where((c) => c.type == CategoryType.expense)
-        .map((c) => c.id)
-        .toSet();
-        
-    final expenses = filtered.where((tx) => expenseCatIds.contains(tx.categoryId)).toList();
+    if (targetTransactions.isEmpty) return [];
 
-    if (expenses.isEmpty) return [];
-
-    // 3. Группируем суммы по ID категории
+    // 2. Группируем суммы
     final Map<int, double> catTotals = {};
-    double totalExpenseSum = 0;
+    double totalSum = 0;
 
-    for (var tx in expenses) {
+    for (var tx in targetTransactions) {
       catTotals[tx.categoryId] = (catTotals[tx.categoryId] ?? 0) + tx.amount;
-      totalExpenseSum += tx.amount;
+      totalSum += tx.amount;
     }
 
-    // 4. Превращаем в секции для графика
-    // Палитра цветов для категорий
+    // 3. Цвета
     final List<Color> colors = [
-      Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, 
+      Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple,
       Colors.teal, Colors.pink, Colors.amber, Colors.indigo, Colors.brown
     ];
-    
     int colorIndex = 0;
 
     return catTotals.entries.map((entry) {
       final catId = entry.key;
       final amount = entry.value;
-      final category = categories.firstWhere((c) => c.id == catId, 
-          orElse: () => Category(id: 0, name: '?', type: CategoryType.expense));
-      
-      final percentage = (amount / totalExpenseSum * 100).toStringAsFixed(1);
+      final category = categoryMap[catId] ?? Category(id: 0, name: '?', type: type);
+
+      final percentage = (amount / totalSum * 100).toStringAsFixed(1);
       final color = colors[colorIndex % colors.length];
       colorIndex++;
 
       return PieChartSectionData(
         color: color,
         value: amount,
-        title: '${percentage}%', // На самом графике только проценты
+        title: '$percentage%',
         radius: 50,
         titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-        // В badge можно запихнуть иконку, но пока оставим просто
       );
     }).toList();
   }
 
-  Widget _buildLegend(List<Transaction> transactions, List<Category> categories) {
-    // Повторяем логику фильтрации, чтобы получить те же категории
-    // (В реальном коде лучше вынести это в отдельный метод расчета State)
-    final filtered = transactions.where((tx) {
-      final txDate = DateTime.parse(tx.date);
-      return txDate.isAfter(widget.dateRange.start.subtract(const Duration(seconds: 1))) &&
-             txDate.isBefore(widget.dateRange.end.add(const Duration(days: 1)));
+  Widget _buildLegend(
+    List<Transaction> transactions, 
+    Map<int, Category> categoryMap,
+    CategoryType type
+  ) {
+    final targetTransactions = transactions.where((tx) {
+      final cat = categoryMap[tx.categoryId];
+      return cat != null && cat.type == type;
     }).toList();
 
-    final expenseCatIds = categories
-        .where((c) => c.type == CategoryType.expense)
-        .map((c) => c.id)
-        .toSet();
-    final expenses = filtered.where((tx) => expenseCatIds.contains(tx.categoryId)).toList();
-    
-    if (expenses.isEmpty) return const SizedBox.shrink();
+    if (targetTransactions.isEmpty) return const SizedBox.shrink();
 
     final Map<int, double> catTotals = {};
-    for (var tx in expenses) {
+    for (var tx in targetTransactions) {
       catTotals[tx.categoryId] = (catTotals[tx.categoryId] ?? 0) + tx.amount;
     }
 
     final List<Color> colors = [
-      Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, 
+      Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple,
       Colors.teal, Colors.pink, Colors.amber, Colors.indigo, Colors.brown
     ];
     int colorIndex = 0;
 
-    // Сортируем по убыванию суммы
     final sortedEntries = catTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return Column(
       children: sortedEntries.map((entry) {
-        final category = categories.firstWhere((c) => c.id == entry.key, 
-            orElse: () => Category(id: 0, name: '?', type: CategoryType.expense));
+        final category = categoryMap[entry.key] ?? Category(id: 0, name: '?', type: type);
         final color = colors[colorIndex % colors.length];
         colorIndex++;
 
@@ -183,8 +171,8 @@ class SummaryTabState extends State<SummaryTab> {
               const SizedBox(width: 8),
               Text(category.name),
               const Spacer(),
-              Text('${entry.value.toStringAsFixed(0)} ₽', 
-                   style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('${entry.value.toStringAsFixed(0)} ₽',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         );
@@ -192,27 +180,62 @@ class SummaryTabState extends State<SummaryTab> {
     );
   }
 
-  @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    // Если SummaryTab сам возвращает Scaffold, добавьте сюда:
-    appBar: AppBar(
-      title: const Text('Обзор'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.date_range),
-          tooltip: 'Выбрать период',
-          onPressed: _selectDateRange,
-        ),
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Обновить данные',
-          onPressed: refreshData, // Тот же метод, что и для Pull-to-Refresh
-        ),
+  Widget _buildChartBlock({
+    required String title,
+    required List<PieChartSectionData> sections,
+    required List<Transaction> filteredTransactions,
+    required Map<int, Category> categoryMap,
+    required CategoryType type,
+  }) {
+    return Column(
+      children: [
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        if (sections.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Center(child: Text('Нет операций за этот период', style: TextStyle(color: Colors.grey))),
+          )
+        else
+          Column(
+            children: [
+              SizedBox(
+                height: 200,
+                child: PieChart(
+                  PieChartData(
+                    sections: sections,
+                    centerSpaceRadius: 40,
+                    sectionsSpace: 2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildLegend(filteredTransactions, categoryMap, type),
+            ],
+          ),
       ],
-    ),
-    body: 
-      RefreshIndicator(
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Обзор'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.date_range),
+            tooltip: 'Выбрать период',
+            onPressed: _selectDateRange,
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Обновить данные',
+            onPressed: refreshData,
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
         onRefresh: refreshData,
         child: FutureBuilder<List<dynamic>>(
           future: _dataFuture,
@@ -224,43 +247,78 @@ Widget build(BuildContext context) {
             );
           },
         ),
-    ),
-  );
-}
+      ),
+    );
+  }
 
   Widget _buildContent(AsyncSnapshot<List<dynamic>> snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
+      return const SizedBox(
+        height: 300, 
+        child: Center(child: CircularProgressIndicator())
+      );
     }
 
     if (snapshot.hasError || !snapshot.hasData) {
-      return const Center(child: Text('Не удалось загрузить данные'));
+      return const SizedBox(
+        height: 300, 
+        child: Center(child: Text('Не удалось загрузить данные'))
+      );
     }
 
-    // Распаковываем данные
-    final Statistics? summary = snapshot.data![0]; 
-    final List<Transaction> transactions = snapshot.data![1] ?? [];
-    final List<Category> categories = snapshot.data![2] ?? [];
+    // Распаковываем данные (внимание на индексы, они сдвинулись)
+    final List<Transaction> transactions = snapshot.data![0] ?? [];
+    final List<Category> categories = snapshot.data![1] ?? [];
+
+    // --- 1. ПРЕДВАРИТЕЛЬНАЯ ОБРАБОТКА ДАННЫХ ---
     
-    // Если статистики нет, показываем ошибку
-    if (summary == null) {
-        return const Center(child: Text('Нет данных статистики'));
+    // Создаем Map для быстрого поиска категории по ID (оптимизация)
+    final Map<int, Category> categoryMap = {
+      for (var c in categories) c.id: c
+    };
+
+    // Фильтруем транзакции по дате ОДИН раз
+    final filteredTransactions = transactions.where((tx) {
+      final txDate = DateTime.parse(tx.date);
+      return txDate.isAfter(widget.dateRange.start.subtract(const Duration(seconds: 1))) &&
+             txDate.isBefore(widget.dateRange.end.add(const Duration(days: 1)));
+    }).toList();
+
+    // --- 2. РАСЧЕТ СТАТИСТИКИ (Balance, Income, Expense) ---
+    double totalIncome = 0;
+    double totalExpense = 0;
+
+    for (var tx in filteredTransactions) {
+      final category = categoryMap[tx.categoryId];
+      if (category != null) {
+        if (category.type == CategoryType.income) {
+          totalIncome += tx.amount;
+        } else {
+          totalExpense += tx.amount;
+        }
+      }
     }
     
-    // Генерируем данные для графика
-    final chartSections = _generateChartSections(transactions, categories);
+    final balance = totalIncome - totalExpense;
+    final transactionsCount = filteredTransactions.length;
+
+    // --- 3. ГЕНЕРАЦИЯ ДАННЫХ ДЛЯ ГРАФИКОВ ---
+    // Передаем уже отфильтрованный список, чтобы не делать это снова
+    final incomeSections = _generateChartSections(filteredTransactions, categoryMap, CategoryType.income);
+    final expenseSections = _generateChartSections(filteredTransactions, categoryMap, CategoryType.expense);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildMainBalanceCard(summary.balance),
+        // Карточки теперь используют рассчитанные нами значения
+        _buildMainBalanceCard(balance),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: _buildStatCard(
                 label: 'Доходы',
-                value: summary.totalIncome,
+                value: totalIncome,
                 color: Colors.green,
                 icon: Icons.trending_up,
               ),
@@ -269,58 +327,56 @@ Widget build(BuildContext context) {
             Expanded(
               child: _buildStatCard(
                 label: 'Расходы',
-                value: summary.totalExpense,
+                value: totalExpense,
                 color: Colors.red,
                 icon: Icons.trending_down,
               ),
             ),
           ],
         ),
-        _buildDateRangeCard(label: 'Период: ${_formatDateRange(widget.dateRange)}'),
         const SizedBox(height: 16),
-        // Основной контент статистики
+        _buildDateRangeCard(label: 'Период: ${_formatDateRange(widget.dateRange)}'),
+        
+        const SizedBox(height: 24),
+        const Divider(),
+        const SizedBox(height: 16),
+
+        // --- БЛОК ДОХОДОВ ---
         Center(
-          child: Column(
-            children: [
-            // --- ДИАГРАММА РАСХОДОВ ---
-            const Text('Структура расходов', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            if(chartSections.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Center(child: Text('Нет расходов за этот период', style: TextStyle(color: Colors.grey))),
-              ) 
-            else
-              Column(
-                children: [
-                  SizedBox(
-                    height: 200,
-                    child: PieChart(
-                      PieChartData(
-                        sections: chartSections,
-                        centerSpaceRadius: 40,
-                        sectionsSpace: 2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Легенда
-                  _buildLegend(transactions, categories),
-                ],
-              ),
-            ],
+          child: _buildChartBlock(
+            title: 'Структура доходов',
+            sections: incomeSections,
+            filteredTransactions: filteredTransactions,
+            categoryMap: categoryMap,
+            type: CategoryType.income,
           ),
         ),
+
+        const SizedBox(height: 32),
+        const Divider(),
+        const SizedBox(height: 16),
+
+        // --- БЛОК РАСХОДОВ ---
+        Center(
+          child: _buildChartBlock(
+            title: 'Структура расходов',
+            sections: expenseSections,
+            filteredTransactions: filteredTransactions,
+            categoryMap: categoryMap,
+            type: CategoryType.expense,
+          ),
+        ),
+
         const SizedBox(height: 24),
         Text(
-          'Всего операций: ${summary.transactionsCount}',
+          'Всего операций: $transactionsCount',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
     );
   }
 
-  // Виджет главной карточки баланса
+  // --- UI КОМПОНЕНТЫ ---
   Widget _buildMainBalanceCard(double balanceValue) {
     return Container(
       width: double.infinity,
@@ -344,7 +400,7 @@ Widget build(BuildContext context) {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Общий баланс',
+            'Баланс за период', // Изменили заголовок, чтобы было понятнее
             style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
@@ -361,7 +417,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  // Виджет маленьких карточек (Доход/Расход)
   Widget _buildStatCard({
     required String label,
     required double value,
@@ -395,10 +450,7 @@ Widget build(BuildContext context) {
     );
   }
 
-  // Виджет даты
-  Widget _buildDateRangeCard({
-    required String label,
-  }) {
+  Widget _buildDateRangeCard({required String label}) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -409,8 +461,8 @@ Widget build(BuildContext context) {
               const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
               const SizedBox(width: 8),
               Text(
-                'Период: ${_formatDateRange(widget.dateRange)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                label.replaceFirst('Период: ', ''),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ],
           ),
