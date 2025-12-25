@@ -1,0 +1,12 @@
+# Игнорируем платформенные папки, чтобы они не мешали Web-сборке
+android/
+ios/
+linux/
+macos/
+windows/
+
+# Игнорируем папку сборки и git
+build/
+.git/
+.github/
+.idea/

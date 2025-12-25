@@ -129,7 +129,7 @@ Future<bool> _showDeleteDialog() async {
                   const SizedBox(height: 15),
                   DropdownButtonFormField<Category>(
                     decoration: const InputDecoration(labelText: 'Категория', border: OutlineInputBorder()),
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     items: _categories
                         .where((c) => c.type.name == _type)
                         .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))

@@ -1,0 +1,8 @@
+services:
+  frontend:
+    build: .
+    container_name: expense_tracker_front
+    restart: always
+    ports:
+      # Слушаем на 8002, но ТОЛЬКО локально (закрыто из интернета)
+      - "127.0.0.1:8002:80"
