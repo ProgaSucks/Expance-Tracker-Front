@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<SummaryTabState> _summaryKey = GlobalKey();
   final GlobalKey<HistoryTabState> _historyKey = GlobalKey();
   final GlobalKey<CategoriesTabState> _categoriesKey = GlobalKey();
+  final GlobalKey<RecommendationsTabState> _recommendationKey = GlobalKey();
 
   // Список виджетов для вкладок
   late List<Widget> _pages;
@@ -55,9 +56,38 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // --- НОВЫЙ МЕТОД: Диалог подтверждения выхода ---
+  Future<void> _showLogoutConfirmation() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // Пользователь должен нажать кнопку
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Выход'),
+          content: const Text('Вы действительно хотите выйти из аккаунта?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Отмена'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Закрыть диалог
+              },
+            ),
+            TextButton(
+              child: const Text('Выйти', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pop(); // Закрыть диалог
+                _logout(); // Выполнить выход
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _onItemTapped(int index) {
     if (index == 4) {
-      _logout();
+      _showLogoutConfirmation();
       return;
     }
 
@@ -75,6 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 2:
         _categoriesKey.currentState?.refreshData();
+        break;
+      case 3:
+        _recommendationKey.currentState?.refreshData();
         break;
     }
   }

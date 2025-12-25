@@ -6,10 +6,10 @@ class RecommendationsTab extends StatefulWidget {
   const RecommendationsTab({super.key});
 
   @override
-  State<RecommendationsTab> createState() => _RecommendationsTabState();
+  State<RecommendationsTab> createState() => RecommendationsTabState();
 }
 
-class _RecommendationsTabState extends State<RecommendationsTab> {
+class RecommendationsTabState extends State<RecommendationsTab> {
   final RecsService _recsService = RecsService();
   late Future<List<Recommendation>> _recsFuture;
 
@@ -23,7 +23,7 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
     _recsFuture = _recsService.getRecommendations();
   }
 
-  Future<void> _refresh() async {
+  Future<void> refreshData() async {
     setState(() {
       _loadData();
     });
@@ -32,7 +32,7 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
 
   Future<void> _markRead(int id) async {
     await _recsService.markAsRead(id);
-    _refresh(); // Обновляем список, чтобы убрать выделение "непрочитано"
+    refreshData(); // Обновляем список, чтобы убрать выделение "непрочитано"
   }
 
   // Вспомогательный метод для выбора иконки и цвета в зависимости от типа
@@ -59,12 +59,12 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
+            onPressed: refreshData,
           )
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _refresh,
+        onRefresh: refreshData,
         child: FutureBuilder<List<Recommendation>>(
           future: _recsFuture,
           builder: (context, snapshot) {

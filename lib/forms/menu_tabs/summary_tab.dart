@@ -116,7 +116,6 @@ class SummaryTabState extends State<SummaryTab> {
       final catId = entry.key;
       final amount = entry.value;
       final category = categoryMap[catId] ?? Category(id: 0, name: '?', type: type);
-
       final percentage = (amount / totalSum * 100).toStringAsFixed(1);
       final color = colors[colorIndex % colors.length];
       colorIndex++;
