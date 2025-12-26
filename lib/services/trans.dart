@@ -21,6 +21,7 @@ class TransactionService {
   required String description,
   required String type,
   required int categoryId,
+  required DateTime date,
 }) async {
   final response = await _apiClient.post(
     '/transactions', {
@@ -28,7 +29,7 @@ class TransactionService {
       'description': description,
       'type': type,
       'category_id': categoryId,
-      'date': DateTime.now().toIso8601String().split('T')[0],
+      'date': date.toIso8601String().split('T')[0]
     },
   );
 
@@ -41,6 +42,7 @@ Future<bool> updateTransaction({
   required String description,
   required String type,
   required int categoryId,
+  required DateTime date,
 }) async {
   final response = await _apiClient.put(
     '/transactions/$id', {
@@ -48,6 +50,7 @@ Future<bool> updateTransaction({
       'description': description,
       'type': type,
       'category_id': categoryId,
+      'date': date.toIso8601String().split('T')[0]
     },
   );
   return response.statusCode == 200;

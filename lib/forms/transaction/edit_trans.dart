@@ -17,6 +17,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _amountController;
   late TextEditingController _descController;
+  late DateTime _selectedDate; // <--- Переменная для даты
   
   late String _type;
   Category? _selectedCategory;
@@ -30,7 +31,31 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
     _amountController = TextEditingController(text: widget.transaction.amount.toString());
     _descController = TextEditingController(text: widget.transaction.description);
     _type = widget.transaction.type.name;
+
+    // 1. Инициализируем дату из транзакции
+    // Предполагаем, что с сервера дата приходит в формате "YYYY-MM-DD"
+    try {
+      _selectedDate = DateTime.parse(widget.transaction.date);
+    } catch (e) {
+      _selectedDate = DateTime.now(); // Если ошибка парсинга
+    }
+
     _loadCategoriesAndSetSelected();
+  }
+
+  // 2. Добавляем тот же метод выбора даты
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
   Future<void> _loadCategoriesAndSetSelected() async {
@@ -74,6 +99,7 @@ Future<bool> _showDeleteDialog() async {
         description: _descController.text,
         type: _type,
         categoryId: _selectedCategory!.id,
+        date: _selectedDate, // <--- Передаем новую дату
       );
 
       if (success) {
@@ -118,6 +144,14 @@ Future<bool> _showDeleteDialog() async {
                         _selectedCategory = null; 
                       });
                     },
+                  ),
+                  const SizedBox(height: 20),
+                  // 3. Виджет выбора даты в ListView
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Дата: ${_selectedDate.toIso8601String().split('T')[0]}'),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: _pickDate,
                   ),
                   const SizedBox(height: 20),
                   TextFormField(

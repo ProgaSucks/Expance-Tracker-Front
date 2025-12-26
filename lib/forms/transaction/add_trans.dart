@@ -19,11 +19,28 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Category? _selectedCategory;
   List<Category> _categories = [];
   bool _isLoading = false;
+  // 1. Добавляем переменную для хранения даты
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _loadCategories();
+  }
+
+  // 2. Метод для вызова календаря
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -42,6 +59,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         description: _descController.text,
         type: _type,
         categoryId: _selectedCategory!.id,
+        date: _selectedDate,
       );
 
       if (success) {
@@ -74,6 +92,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         _selectedCategory = null; // Сбрасываем категорию при смене типа
                       });
                     },
+                  ),
+                  const SizedBox(height: 15),
+                  // 3. Виджет выбора даты
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Дата: ${_selectedDate.toIso8601String().split('T')[0]}'),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: _pickDate,
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
